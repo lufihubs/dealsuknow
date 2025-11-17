@@ -14,16 +14,19 @@ How to host
 
 Editing products from your phone
 - Navigate to `yourdomain.com/admin` (keep this URL private!)
+- **Login** with username: `admin` and password: `Thehunted1`
 - View all existing products with thumbnails
 - **Add new products**: Fill the form and tap "Add Product"
 - **Edit products**: Tap the "Edit" button on any product, modify fields, and save
 - **Delete products**: Tap the "Delete" button and confirm
 - When done, tap "Download products.json" and upload it to replace the old file (or use GitHub mobile to edit)
+- Click "Logout" when finished
 
 The admin panel:
+- Protected by login (username: admin, password: Thehunted1)
 - Lists all products with thumbnails, edit, and delete buttons
 - Mobile-optimized for easy phone editing
-- Not linked from the public site (keep `/admin` URL private)
+- Not linked from the public site (keep `/admin` URL and credentials private)
 
 Notes
 - Static sites cannot directly write files on the server. The admin flow downloads JSON for manual merging. If you want direct mobile editing, consider using Netlify functions or a small backend service (I can add that).

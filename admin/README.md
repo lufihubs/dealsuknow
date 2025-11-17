@@ -3,7 +3,11 @@
 ## Access
 Navigate to: `yoursite.com/admin`
 
-**Keep this URL private!** This is your admin panel - don't share or link it publicly.
+**Login Credentials:**
+- Username: `admin`
+- Password: `Thehunted1`
+
+**Keep this URL and credentials private!** Don't share or link publicly.
 
 ## Features
 
@@ -36,6 +40,9 @@ Navigate to: `yoursite.com/admin`
    - **GitHub**: Use GitHub mobile app to edit/replace `products.json`
    - **FTP**: Upload via FTP client
    - **Netlify/Vercel**: Drag & drop in dashboard or push to git
+
+### Logout
+Click the "Logout" button in the top-right corner when done
 
 ## Mobile-Friendly
 - Optimized for phone editing

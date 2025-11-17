@@ -1,8 +1,22 @@
 function uid() { return 'p' + Date.now() + Math.random().toString(36).slice(2,7); }
 
+const SESSION_KEY = 'dealsuknow_admin_session';
 let products = [];
 
+// Check authentication
+if (sessionStorage.getItem(SESSION_KEY) !== 'authenticated') {
+  window.location.href = 'index.html';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Logout button
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to logout?')) {
+      sessionStorage.removeItem(SESSION_KEY);
+      window.location.href = 'index.html';
+    }
+  });
+
   loadProducts();
 
   const form = document.getElementById('product-form');
