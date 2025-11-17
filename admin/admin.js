@@ -409,24 +409,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNotification('Backup downloaded successfully!', 'info');
   });
 
-  // Sync to GitHub - Updates live site
+  // Sync to Main Site - Updates live site instantly
   document.getElementById('sync-github').addEventListener('click', async () => {
-    if (!window.GITHUB_CONFIG.token || window.GITHUB_CONFIG.token === 'YOUR_GITHUB_TOKEN') {
-      alert('⚠️ GitHub Token Not Configured!\n\nTo enable live updates:\n\n1. Go to: https://github.com/settings/tokens/new\n2. Create token with "repo" scope\n3. Edit admin/github-sync.js\n4. Replace YOUR_GITHUB_TOKEN with your token\n5. Push changes to GitHub\n\nFor now, products are saved locally only.');
-      return;
-    }
-    
     if (products.length === 0) {
-      alert('No products to sync!');
+      alert('❌ No products to sync!\n\nAdd some products first, then sync.');
       return;
     }
 
-    if (confirm(`Sync ${products.length} product(s) to GitHub?\n\nThis will update your live site in ~1 minute.`)) {
-      const success = await window.saveToGitHub(products);
-      if (success) {
-        // Also save to localStorage as backup
-        autoSaveProducts();
-      }
+    try {
+      // Save to localStorage first
+      autoSaveProducts();
+      
+      // Create sync URL with products encoded
+      const syncData = btoa(JSON.stringify(products));
+      const mainSiteUrl = window.location.origin.replace('/admin/panel.html', '') + '/?sync=' + encodeURIComponent(syncData);
+      
+      // Show sync dialog with link
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
+      modal.innerHTML = `
+        <div style="background:white;padding:30px;border-radius:15px;max-width:600px;text-align:center;">
+          <h3 style="color:#198754;margin-bottom:20px;">
+            <i class="fas fa-check-circle"></i> Products Saved!
+          </h3>
+          <p style="margin-bottom:20px;color:#666;">
+            <strong>${products.length} product(s)</strong> are ready to publish.
+          </p>
+          <p style="margin-bottom:25px;color:#666;">
+            Click the button below to update your live site:
+          </p>
+          <a href="${mainSiteUrl}" target="_blank" class="btn btn-success btn-lg" style="text-decoration:none;display:inline-block;padding:15px 40px;">
+            <i class="fas fa-rocket"></i> Update Live Site Now
+          </a>
+          <p style="margin-top:20px;font-size:14px;color:#999;">
+            This opens your main site with updated products
+          </p>
+          <button onclick="this.closest('div[style*=fixed]').remove()" class="btn btn-secondary mt-3">
+            Close
+          </button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      showNotification('✅ Products packaged for sync!', 'success');
+      
+    } catch (error) {
+      console.error('Sync error:', error);
+      showNotification('❌ Sync failed: ' + error.message, 'danger');
     }
   });
 

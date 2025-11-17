@@ -1,13 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
+  // Check for sync data in URL first (cross-domain updates)
+  const urlParams = new URLSearchParams(window.location.search);
+  const syncData = urlParams.get('sync');
+  
+  if (syncData) {
+    try {
+      const products = JSON.parse(atob(syncData));
+      localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+      console.log('✅ Products synced from admin!');
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+      renderProducts(products);
+      return;
+    } catch (e) {
+      console.warn('Failed to sync from URL:', e);
+    }
+  }
+
   // Load from localStorage first (for live admin updates), then fallback to products.json
   const localProducts = localStorage.getItem('dealsuknow_products');
   
   if (localProducts) {
     try {
       const data = JSON.parse(localProducts);
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('✅ Loaded products from localStorage');
         renderProducts(data);
         return;
       }
