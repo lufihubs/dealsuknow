@@ -104,6 +104,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const imagePreview = document.getElementById('image-preview');
   const previewImg = document.getElementById('preview-img');
   const removeImageBtn = document.getElementById('remove-image');
+  const platformSelect = document.getElementById('platform');
+  const urlLabel = document.getElementById('url-label');
+  const urlInput = document.getElementById('url');
+
+  // Handle platform selection
+  platformSelect.addEventListener('change', () => {
+    const platform = platformSelect.value;
+    const icons = {
+      amazon: '<i class="fab fa-amazon me-1"></i>',
+      shopify: '<i class="fab fa-shopify me-1"></i>',
+      tiktok: '<i class="fab fa-tiktok me-1"></i>'
+    };
+    const placeholders = {
+      amazon: 'https://www.amazon.com/...',
+      shopify: 'https://yourstore.myshopify.com/...',
+      tiktok: 'https://shop.tiktok.com/...'
+    };
+    urlLabel.innerHTML = `${icons[platform]}Product URL`;
+    urlInput.placeholder = placeholders[platform];
+  });
 
   // Handle image file upload
   imageFileInput.addEventListener('change', (e) => {
@@ -179,8 +199,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auto-save products to localStorage (instant updates)
   function autoSaveProducts() {
-    localStorage.setItem('dealsuknow_products', JSON.stringify(products));
-    showNotification('Changes saved! Updates will appear immediately on the main site.', 'success');
+    try {
+      localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+      console.log('Products saved:', products.length);
+      showNotification(`✓ Saved! ${products.length} product(s) in your store.`, 'success');
+    } catch (e) {
+      console.error('Failed to save:', e);
+      showNotification('Failed to save changes. Check console for details.', 'danger');
+    }
   }
 
   // Render products list with edit/delete buttons
@@ -248,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const productUrl = document.getElementById('url').value.trim();
     const price = sanitizeInput(document.getElementById('price').value.trim());
     const badge = sanitizeInput(document.getElementById('badge').value.trim());
+    const platform = document.getElementById('platform').value;
     
     // Validate inputs
     if (!title || title.length < 3) {
@@ -282,7 +309,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       image: imageUrl,
       url: productUrl,
       price: price,
-      badge: badge
+      badge: badge,
+      platform: platform
     };
 
     if (editIndex !== '') {
@@ -319,6 +347,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('url').value = p.url;
     document.getElementById('price').value = p.price;
     document.getElementById('badge').value = p.badge || '';
+    document.getElementById('platform').value = p.platform || 'amazon';
+    
+    // Trigger platform change to update UI
+    platformSelect.dispatchEvent(new Event('change'));
     
     // Show image preview if exists
     if (p.image) {
@@ -360,6 +392,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     imageHiddenInput.value = '';
     previewImg.src = '';
     imagePreview.style.display = 'none';
+    document.getElementById('platform').value = 'amazon';
+    platformSelect.dispatchEvent(new Event('change'));
     document.getElementById('form-title').textContent = 'Add New Product';
     document.getElementById('submit-text').textContent = 'Add Product';
     cancelBtn.style.display = 'none';

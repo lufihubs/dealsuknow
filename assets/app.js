@@ -100,11 +100,39 @@ document.addEventListener('DOMContentLoaded', () => {
       btnWrap.className = 'd-grid gap-2';
 
       const btn = document.createElement('a');
-      btn.className = 'btn btn-success btn-buy';
       btn.href = escapeHtml(p.url);
       btn.target = '_blank';
-      btn.rel = 'noopener noreferrer nofollow'; // Added nofollow for SEO
-      btn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Buy on Amazon';
+      btn.rel = 'noopener noreferrer nofollow';
+      
+      // Platform-specific button styling
+      const platform = p.platform || 'amazon';
+      const platformConfig = {
+        amazon: {
+          class: 'btn btn-warning btn-buy',
+          icon: 'fab fa-amazon',
+          text: 'Buy on Amazon',
+          gradient: 'linear-gradient(90deg, #FF9900, #FF7A00)'
+        },
+        shopify: {
+          class: 'btn btn-success btn-buy',
+          icon: 'fab fa-shopify',
+          text: 'Buy on Shopify',
+          gradient: 'linear-gradient(90deg, #96bf48, #5e8e3e)'
+        },
+        tiktok: {
+          class: 'btn btn-dark btn-buy',
+          icon: 'fab fa-tiktok',
+          text: 'Buy on TikTok',
+          gradient: 'linear-gradient(90deg, #000000, #ee1d52)'
+        }
+      };
+      
+      const config = platformConfig[platform];
+      btn.className = config.class;
+      btn.style.background = config.gradient;
+      btn.style.border = 'none';
+      btn.style.color = 'white';
+      btn.innerHTML = `<i class="${config.icon} me-2"></i>${config.text}`;
 
       if (p.badge && p.badge.trim()) {
         const badge = document.createElement('span');

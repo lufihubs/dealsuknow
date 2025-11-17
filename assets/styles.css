@@ -36,18 +36,17 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 .btn-buy { 
-  background: linear-gradient(90deg,#ff9900,#ff7a00); 
   border: none; 
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: all 0.3s ease;
 }
 
 .btn-buy:hover {
-  background: linear-gradient(90deg,#ff7a00,#ff5500);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255,153,0,0.4);
-  transition: all 0.3s ease;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  filter: brightness(1.1);
 }
 
 .navbar-brand { 
