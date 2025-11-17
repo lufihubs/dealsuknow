@@ -1,0 +1,8 @@
+{
+  "name": "dealsuknow",
+  "version": "1.0.0",
+  "description": "Product listing site with affiliate links",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
