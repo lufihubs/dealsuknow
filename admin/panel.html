@@ -112,14 +112,14 @@
 
     <!-- Download JSON Button -->
     <div class="mt-4 text-center">
-      <button id="download-json" class="btn btn-primary btn-lg">
-        <i class="fas fa-download me-2"></i>Download products.json
+      <div class="alert alert-info">
+        <i class="fas fa-magic me-2"></i><strong>Auto-Save Enabled!</strong><br>
+        <small>Products.json downloads automatically when you add/edit/delete products. 
+        Upload the downloaded file to your server to update the live site.</small>
+      </div>
+      <button id="download-json" class="btn btn-outline-primary btn-lg">
+        <i class="fas fa-download me-2"></i>Manual Download
       </button>
-      <p class="text-muted small mt-2">
-        <i class="fas fa-info-circle me-1"></i>Changes update instantly in this panel. 
-        To see them on the main site, download the JSON and upload it to replace <code>products.json</code> 
-        (or use GitHub mobile to edit the file).
-      </p>
     </div>
   </main>
 

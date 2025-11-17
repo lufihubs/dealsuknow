@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load existing products from products.json
   function loadProducts() {
-    fetch('../products.json')
+    fetch('../products.json?t=' + Date.now()) // Cache bust
       .then(r => r.json())
       .then(data => {
         products = data || [];
@@ -160,6 +160,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         products = [];
         renderProductsList();
       });
+  }
+
+  // Auto-save products to file (downloads automatically)
+  function autoSaveProducts() {
+    const blob = new Blob([JSON.stringify(products, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'products.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Changes saved! Upload the downloaded products.json to your server.', 'info');
   }
 
   // Render products list with edit/delete buttons
@@ -277,6 +289,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetForm();
     renderProductsList();
     
+    // Auto-save immediately
+    setTimeout(() => {
+      autoSaveProducts();
+    }, 500);
+    
     // Scroll to products list to show the update
     setTimeout(() => {
       document.getElementById('products-list').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -315,6 +332,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       products.splice(index, 1);
       renderProductsList();
       showNotification(`"${deletedProduct.title}" deleted successfully!`, 'warning');
+      
+      // Auto-save immediately
+      setTimeout(() => {
+        autoSaveProducts();
+      }, 500);
     }
   };
 
