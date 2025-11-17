@@ -56,7 +56,12 @@ function initializeProducts() {
   
   if (syncData) {
     try {
-      const products = JSON.parse(atob(syncData));
+      // Decode from base64 (handle Unicode properly)
+      const base64String = atob(syncData);
+      const utf8Bytes = Uint8Array.from(base64String, c => c.charCodeAt(0));
+      const jsonString = new TextDecoder().decode(utf8Bytes);
+      const products = JSON.parse(jsonString);
+      
       localStorage.setItem('dealsuknow_products', JSON.stringify(products));
       console.log('Synced products from URL');
       // Clean URL

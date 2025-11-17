@@ -7,9 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (syncData) {
     try {
-      const products = JSON.parse(atob(syncData));
+      // Decode from base64 (handle Unicode properly)
+      const base64String = atob(syncData);
+      const utf8Bytes = Uint8Array.from(base64String, c => c.charCodeAt(0));
+      const jsonString = new TextDecoder().decode(utf8Bytes);
+      const products = JSON.parse(jsonString);
+      
       localStorage.setItem('dealsuknow_products', JSON.stringify(products));
-      console.log('✅ Products synced from admin!');
+      console.log('✅ Products synced from admin!', products.length, 'products');
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
       renderProducts(products);

@@ -420,8 +420,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Save to localStorage first
       autoSaveProducts();
       
-      // Create sync URL with products encoded
-      const syncData = btoa(JSON.stringify(products));
+      // Create sync URL with products encoded (handle Unicode characters properly)
+      const jsonString = JSON.stringify(products);
+      // Convert to UTF-8 bytes first, then to base64
+      const utf8Bytes = new TextEncoder().encode(jsonString);
+      const base64String = btoa(String.fromCharCode(...utf8Bytes));
+      const syncData = base64String;
       const mainSiteUrl = window.location.origin.replace('/admin/panel.html', '') + '/?sync=' + encodeURIComponent(syncData);
       
       // Show sync dialog with link
