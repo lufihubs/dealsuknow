@@ -147,12 +147,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     imagePreview.style.display = 'none';
   });
 
-  // Load existing products from products.json
+  // Load existing products from localStorage or products.json
   function loadProducts() {
+    // Try localStorage first (for live edits)
+    const localProducts = localStorage.getItem('dealsuknow_products');
+    if (localProducts) {
+      try {
+        products = JSON.parse(localProducts);
+        renderProductsList();
+        return;
+      } catch (e) {
+        console.warn('Failed to parse localStorage products', e);
+      }
+    }
+
+    // Fallback to products.json
     fetch('../products.json?t=' + Date.now()) // Cache bust
       .then(r => r.json())
       .then(data => {
         products = data || [];
+        // Save to localStorage for future use
+        localStorage.setItem('dealsuknow_products', JSON.stringify(products));
         renderProductsList();
       })
       .catch(err => {
@@ -162,16 +177,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
   }
 
-  // Auto-save products to file (downloads automatically)
+  // Auto-save products to localStorage (instant updates)
   function autoSaveProducts() {
-    const blob = new Blob([JSON.stringify(products, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'products.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showNotification('Changes saved! Upload the downloaded products.json to your server.', 'info');
+    localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+    showNotification('Changes saved! Updates will appear immediately on the main site.', 'success');
   }
 
   // Render products list with edit/delete buttons
@@ -356,14 +365,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     cancelBtn.style.display = 'none';
   }
 
-  // Download JSON
+  // Manual Download JSON (backup)
   downloadBtn.addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(products, null, 2)], {type: 'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'products.json';
     a.click();
-    showNotification('products.json downloaded! Upload it to replace the old file.', 'info');
+    showNotification('Backup downloaded successfully!', 'info');
+  });
+
+  // Clear storage and reset to default
+  document.getElementById('clear-storage').addEventListener('click', () => {
+    if (confirm('This will reset to the default products.json from the server. Continue?')) {
+      localStorage.removeItem('dealsuknow_products');
+      showNotification('Storage cleared! Reloading...', 'warning');
+      setTimeout(() => location.reload(), 1000);
+    }
   });
 
   // Show notification

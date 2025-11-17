@@ -1,7 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Secure fetch with timeout
+  // Load from localStorage first (for live admin updates), then fallback to products.json
+  const localProducts = localStorage.getItem('dealsuknow_products');
+  
+  if (localProducts) {
+    try {
+      const data = JSON.parse(localProducts);
+      if (Array.isArray(data)) {
+        renderProducts(data);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to parse localStorage products', e);
+    }
+  }
+
+  // Fallback to products.json
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
@@ -13,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(data => {
       if (!Array.isArray(data)) throw new Error('Invalid data format');
+      // Save to localStorage for future use
+      localStorage.setItem('dealsuknow_products', JSON.stringify(data));
       renderProducts(data);
     })
     .catch(err => {
