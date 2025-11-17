@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logout-btn').addEventListener('click', () => {
     if (confirm('Are you sure you want to logout?')) {
       sessionStorage.removeItem(SESSION_KEY);
-      localStorage.clear(); // Clear any stored data
+      // Don't clear localStorage - keep products data
       window.location.href = 'index.html';
     }
   });
@@ -407,6 +407,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     a.download = 'products.json';
     a.click();
     showNotification('Backup downloaded successfully!', 'info');
+  });
+
+  // Debug storage - show what's saved
+  document.getElementById('debug-storage').addEventListener('click', () => {
+    const stored = localStorage.getItem('dealsuknow_products');
+    if (!stored) {
+      alert('⚠️ No products found in localStorage!\n\nThis means:\n- Products not saving, OR\n- You\'re on a different domain than your main site\n\nSolution: Make sure admin panel and main site are on the SAME domain.');
+      return;
+    }
+    
+    try {
+      const data = JSON.parse(stored);
+      const info = `✅ Storage Working!\n\n` +
+        `Products in storage: ${data.length}\n` +
+        `Storage size: ${(stored.length / 1024).toFixed(2)} KB\n` +
+        `Max size: ~5000 KB\n\n` +
+        `Domain: ${window.location.hostname}\n\n` +
+        `First 3 products:\n` +
+        data.slice(0, 3).map(p => `- ${p.title}`).join('\n');
+      alert(info);
+      console.log('Full localStorage data:', data);
+    } catch (e) {
+      alert('❌ Storage corrupted!\n\n' + e.message);
+    }
   });
 
   // Clear storage and reset to default
