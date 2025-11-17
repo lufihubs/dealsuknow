@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Fix - Admin Panel</title>
+</head>
+<body>
+    <h1>Testing Publish Function</h1>
+    <button id="test-publish">Test Publish</button>
+    
+    <script>
+    // Simple test
+    document.getElementById('test-publish').addEventListener('click', async () => {
+        console.log('Button clicked!');
+        
+        const testProducts = [
+            {
+                id: 'test1',
+                title: 'Test Product',
+                image: 'data:image/png;base64,test',
+                price: '19.99',
+                url: 'https://amazon.com/test',
+                platform: 'amazon'
+            }
+        ];
+        
+        try {
+            console.log('Calling Netlify function...');
+            const response = await fetch('/.netlify/functions/update-products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ products: testProducts })
+            });
+            
+            console.log('Response status:', response.status);
+            const result = await response.json();
+            console.log('Result:', result);
+            
+            if (response.ok) {
+                alert('SUCCESS! Check console for details.');
+            } else {
+                alert('ERROR: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('ERROR: ' + error.message);
+        }
+    });
+    </script>
+</body>
+</html>

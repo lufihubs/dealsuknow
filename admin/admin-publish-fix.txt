@@ -1,0 +1,47 @@
+﻿  // Publish to GitHub - Secure deployment via Netlify
+  document.getElementById('sync-github').addEventListener('click', async () => {
+    if (products.length === 0) {
+      alert('No products to publish! Add some products first.');
+      return;
+    }
+
+    if (!confirm('Publish ' + products.length + ' product(s) to GitHub? Deploys in ~30 seconds.')) {
+      return;
+    }
+
+    try {
+      const result = await window.saveToGitHub(products);
+      
+      if (result) {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        modal.innerHTML = '<div style="background:white;padding:40px;border-radius:15px;max-width:500px;text-align:center;">' +
+          '<div style="font-size:60px;margin-bottom:20px;"></div>' +
+          '<h3 style="color:#198754;margin-bottom:20px;">Published Successfully!</h3>' +
+          '<p style="color:#666;margin-bottom:30px;">' + products.length + ' products pushed to GitHub<br>Netlify is deploying now...</p>' +
+          '<div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:30px;">' +
+          '<div style="font-size:48px;font-weight:bold;color:#0d6efd;" id="countdown">30</div>' +
+          '<div style="color:#666;font-size:14px;">seconds until live</div></div>' +
+          '<button onclick="this.closest(\'div[style*=fixed]\').remove()" class="btn btn-primary">Close</button></div>';
+        document.body.appendChild(modal);
+        
+        let seconds = 30;
+        const countdownEl = document.getElementById('countdown');
+        const interval = setInterval(() => {
+          seconds--;
+          if (countdownEl) countdownEl.textContent = seconds;
+          if (seconds <= 0) {
+            clearInterval(interval);
+            if (countdownEl) {
+              countdownEl.textContent = '';
+              countdownEl.parentElement.querySelector('div').textContent = 'Site is live!';
+            }
+          }
+        }, 1000);
+      }
+      
+    } catch (error) {
+      console.error('Publish error:', error);
+      alert('Publish Failed: ' + error.message);
+    }
+  });
