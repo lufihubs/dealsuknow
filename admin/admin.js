@@ -99,6 +99,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('product-form');
   const cancelBtn = document.getElementById('cancel-edit');
   const downloadBtn = document.getElementById('download-json');
+  const imageFileInput = document.getElementById('image-file');
+  const imageHiddenInput = document.getElementById('image');
+  const imagePreview = document.getElementById('image-preview');
+  const previewImg = document.getElementById('preview-img');
+  const removeImageBtn = document.getElementById('remove-image');
+
+  // Handle image file upload
+  imageFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showNotification('Please select a valid image file', 'danger');
+      imageFileInput.value = '';
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showNotification('Image size must be less than 2MB', 'danger');
+      imageFileInput.value = '';
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Image = event.target.result;
+      imageHiddenInput.value = base64Image;
+      previewImg.src = base64Image;
+      imagePreview.style.display = 'block';
+      showNotification('Image uploaded successfully', 'success');
+    };
+    reader.onerror = () => {
+      showNotification('Failed to read image file', 'danger');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Remove image
+  removeImageBtn.addEventListener('click', () => {
+    imageFileInput.value = '';
+    imageHiddenInput.value = '';
+    previewImg.src = '';
+    imagePreview.style.display = 'none';
+  });
 
   // Load existing products from products.json
   function loadProducts() {
@@ -187,8 +234,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     
-    if (!isValidUrl(imageUrl)) {
-      showNotification('Invalid image URL. Must start with http:// or https://', 'danger');
+    if (!imageUrl) {
+      showNotification('Please upload a product image', 'danger');
+      return;
+    }
+    
+    // Validate image is either base64 or valid URL
+    if (!imageUrl.startsWith('data:image/') && !isValidUrl(imageUrl)) {
+      showNotification('Invalid image. Please upload an image file', 'danger');
       return;
     }
     
@@ -236,6 +289,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('price').value = p.price;
     document.getElementById('badge').value = p.badge || '';
     
+    // Show image preview if exists
+    if (p.image) {
+      previewImg.src = p.image;
+      imagePreview.style.display = 'block';
+    }
+    
     document.getElementById('form-title').textContent = 'Edit Product';
     document.getElementById('submit-text').textContent = 'Update Product';
     cancelBtn.style.display = 'inline-block';
@@ -260,6 +319,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.reset();
     document.getElementById('edit-id').value = '';
     document.getElementById('edit-index').value = '';
+    imageFileInput.value = '';
+    imageHiddenInput.value = '';
+    previewImg.src = '';
+    imagePreview.style.display = 'none';
     document.getElementById('form-title').textContent = 'Add New Product';
     document.getElementById('submit-text').textContent = 'Add Product';
     cancelBtn.style.display = 'none';

@@ -55,9 +55,16 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label"><i class="fas fa-image me-1"></i>Image URL</label>
-            <input required class="form-control" id="image" placeholder="https://...jpg">
-            <small class="text-muted">Right-click image → Copy image address</small>
+            <label class="form-label"><i class="fas fa-image me-1"></i>Product Image</label>
+            <input type="file" class="form-control" id="image-file" accept="image/*" capture="environment">
+            <small class="text-muted d-block mt-1">Upload from device or camera</small>
+            <input type="hidden" id="image" required>
+            <div id="image-preview" class="mt-2" style="display:none;">
+              <img id="preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #ddd;">
+              <button type="button" class="btn btn-sm btn-danger ms-2" id="remove-image">
+                <i class="fas fa-times"></i> Remove
+              </button>
+            </div>
           </div>
 
           <div class="col-md-6">
