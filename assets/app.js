@@ -1,37 +1,47 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Check for sync data in URL first (cross-domain updates)
-  const urlParams = new URLSearchParams(window.location.search);
-  const syncData = urlParams.get('sync');
-  
-  if (syncData) {
-    try {
-      // Decode from base64 (handle Unicode properly)
-      const base64String = atob(syncData);
-      const utf8Bytes = Uint8Array.from(base64String, c => c.charCodeAt(0));
-      const jsonString = new TextDecoder().decode(utf8Bytes);
-      const products = JSON.parse(jsonString);
-      
-      localStorage.setItem('dealsuknow_products', JSON.stringify(products));
-      console.log('✅ Products synced from admin!', products.length, 'products');
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
-      renderProducts(products);
-      return;
-    } catch (e) {
-      console.warn('Failed to sync from URL:', e);
+  // Load products in priority order:
+  // 1. Cloud storage (latest, works across domains)
+  // 2. localStorage (cached)
+  // 3. products.json (fallback)
+
+  // Try loading from cloud first
+  try {
+    const STORAGE_CONFIG = {
+      binId: '6759a1c0acd3cb34a8b8f2e1',
+      apiKey: '$2a$10$cYqVWbKC7YhzZ8L5EkZHe.XFN5rE8qGBx8cYvHj7L9kZMQ4pC5vZK',
+      apiUrl: 'https://api.jsonbin.io/v3'
+    };
+
+    const response = await fetch(`${STORAGE_CONFIG.apiUrl}/b/${STORAGE_CONFIG.binId}/latest`, {
+      headers: {
+        'X-Master-Key': STORAGE_CONFIG.apiKey
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.record && data.record.products && data.record.products.length > 0) {
+        console.log('✅ Loaded products from cloud:', data.record.products.length);
+        // Cache in localStorage for offline access
+        localStorage.setItem('dealsuknow_products', JSON.stringify(data.record.products));
+        renderProducts(data.record.products);
+        return;
+      }
     }
+  } catch (e) {
+    console.warn('Cloud load failed, trying localStorage:', e.message);
   }
 
-  // Load from localStorage first (for live admin updates), then fallback to products.json
+  // Fallback to localStorage
   const localProducts = localStorage.getItem('dealsuknow_products');
   
   if (localProducts) {
     try {
       const data = JSON.parse(localProducts);
       if (Array.isArray(data) && data.length > 0) {
-        console.log('✅ Loaded products from localStorage');
+        console.log('✅ Loaded products from localStorage (cached)');
         renderProducts(data);
         return;
       }

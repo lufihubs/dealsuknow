@@ -167,15 +167,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     imagePreview.style.display = 'none';
   });
 
-  // Load existing products from localStorage or products.json
-  function loadProducts() {
-    // Try localStorage first (for live edits)
+  // Load existing products from cloud, localStorage, or products.json
+  async function loadProducts() {
+    // Try loading from cloud first (latest data)
+    try {
+      const cloudProducts = await window.loadFromCloud();
+      if (cloudProducts && Array.isArray(cloudProducts) && cloudProducts.length > 0) {
+        products = cloudProducts;
+        localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+        console.log('✅ Loaded from cloud:', products.length, 'products');
+        renderProductsList();
+        return;
+      }
+    } catch (e) {
+      console.warn('Cloud load failed:', e);
+    }
+
+    // Try localStorage (cached)
     const localProducts = localStorage.getItem('dealsuknow_products');
     if (localProducts) {
       try {
         products = JSON.parse(localProducts);
-        renderProductsList();
-        return;
+        if (products.length > 0) {
+          console.log('✅ Loaded from localStorage:', products.length, 'products');
+          renderProductsList();
+          return;
+        }
       } catch (e) {
         console.warn('Failed to parse localStorage products', e);
       }
@@ -186,8 +203,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       .then(r => r.json())
       .then(data => {
         products = data || [];
-        // Save to localStorage for future use
         localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+        console.log('✅ Loaded from products.json:', products.length, 'products');
         renderProductsList();
       })
       .catch(err => {
@@ -409,57 +426,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNotification('Backup downloaded successfully!', 'info');
   });
 
-  // Sync to Main Site - Updates live site instantly
+  // Publish to Cloud - Updates live site instantly
   document.getElementById('sync-github').addEventListener('click', async () => {
     if (products.length === 0) {
-      alert('❌ No products to sync!\n\nAdd some products first, then sync.');
+      alert('❌ No products to publish!\n\nAdd some products first, then publish.');
+      return;
+    }
+
+    if (!confirm(`📤 Publish ${products.length} product(s) to live site?\n\nThis will make them visible to all visitors.`)) {
       return;
     }
 
     try {
-      // Save to localStorage first
-      autoSaveProducts();
+      // Publish to cloud storage (works across all domains)
+      const success = await window.saveToCloud(products);
       
-      // Create sync URL with products encoded (handle Unicode characters properly)
-      const jsonString = JSON.stringify(products);
-      // Convert to UTF-8 bytes first, then to base64
-      const utf8Bytes = new TextEncoder().encode(jsonString);
-      const base64String = btoa(String.fromCharCode(...utf8Bytes));
-      const syncData = base64String;
-      const mainSiteUrl = window.location.origin.replace('/admin/panel.html', '') + '/?sync=' + encodeURIComponent(syncData);
-      
-      // Show sync dialog with link
-      const modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
-      modal.innerHTML = `
-        <div style="background:white;padding:30px;border-radius:15px;max-width:600px;text-align:center;">
-          <h3 style="color:#198754;margin-bottom:20px;">
-            <i class="fas fa-check-circle"></i> Products Saved!
-          </h3>
-          <p style="margin-bottom:20px;color:#666;">
-            <strong>${products.length} product(s)</strong> are ready to publish.
-          </p>
-          <p style="margin-bottom:25px;color:#666;">
-            Click the button below to update your live site:
-          </p>
-          <a href="${mainSiteUrl}" target="_blank" class="btn btn-success btn-lg" style="text-decoration:none;display:inline-block;padding:15px 40px;">
-            <i class="fas fa-rocket"></i> Update Live Site Now
-          </a>
-          <p style="margin-top:20px;font-size:14px;color:#999;">
-            This opens your main site with updated products
-          </p>
-          <button onclick="this.closest('div[style*=fixed]').remove()" class="btn btn-secondary mt-3">
-            Close
-          </button>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      
-      showNotification('✅ Products packaged for sync!', 'success');
+      if (success) {
+        // Show success message
+        showNotification(`✅ Published ${products.length} products successfully!`, 'success');
+        
+        // Optional: Open main site to verify
+        if (confirm('✅ Products published!\n\nOpen main site to verify?')) {
+          window.open(window.location.origin.replace('/admin/panel.html', ''), '_blank');
+        }
+      }
       
     } catch (error) {
-      console.error('Sync error:', error);
-      showNotification('❌ Sync failed: ' + error.message, 'danger');
+      console.error('Publish error:', error);
+      showNotification('❌ Publish failed: ' + error.message, 'danger');
+      
+      // Show helpful error message
+      alert('❌ Publish Failed\n\n' + 
+            'Possible causes:\n' +
+            '1. No internet connection\n' +
+            '2. Cloud storage not configured\n' +
+            '3. API quota exceeded\n\n' +
+            'Products are saved locally for now.');
     }
   });
 
