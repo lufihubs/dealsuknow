@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const price = document.createElement('p');
       price.className = 'mt-auto mb-2 fw-bold';
       const priceValue = parseFloat(p.price);
-      price.textContent = !isNaN(priceValue) && priceValue > 0 ? `£${priceValue.toFixed(2)}` : '';
+      price.textContent = !isNaN(priceValue) && priceValue > 0 ? `$${priceValue.toFixed(2)}` : '';
 
       const btnWrap = document.createElement('div');
       btnWrap.className = 'd-grid gap-2';

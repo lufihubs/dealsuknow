@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
           <div class="col">
             <h6 class="mb-1">${safeTitle}</h6>
-            <small class="text-muted">£${safePrice}</small>
+            <small class="text-muted">$${safePrice}</small>
             ${safeBadge ? `<span class="badge bg-danger ms-2">${safeBadge}</span>` : ''}
           </div>
           <div class="col-auto">
@@ -276,6 +276,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     resetForm();
     renderProductsList();
+    
+    // Scroll to products list to show the update
+    setTimeout(() => {
+      document.getElementById('products-list').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   });
 
   // Edit product
@@ -306,9 +311,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Delete product
   window.deleteProduct = function(index) {
     if (confirm('Are you sure you want to delete this product?')) {
+      const deletedProduct = products[index];
       products.splice(index, 1);
       renderProductsList();
-      showNotification('Product deleted successfully!', 'danger');
+      showNotification(`"${deletedProduct.title}" deleted successfully!`, 'warning');
     }
   };
 
