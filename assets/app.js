@@ -1,54 +1,5 @@
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
-
-  // Load products in priority order:
-  // 1. Cloud storage (latest, works across domains)
-  // 2. localStorage (cached)
-  // 3. products.json (fallback)
-
-  // Try loading from cloud first
-  try {
-    const STORAGE_CONFIG = {
-      binId: '6759a1c0acd3cb34a8b8f2e1',
-      apiKey: '$2a$10$cYqVWbKC7YhzZ8L5EkZHe.XFN5rE8qGBx8cYvHj7L9kZMQ4pC5vZK',
-      apiUrl: 'https://api.jsonbin.io/v3'
-    };
-
-    const response = await fetch(`${STORAGE_CONFIG.apiUrl}/b/${STORAGE_CONFIG.binId}/latest`, {
-      headers: {
-        'X-Master-Key': STORAGE_CONFIG.apiKey
-      }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.record && data.record.products && data.record.products.length > 0) {
-        console.log('✅ Loaded products from cloud:', data.record.products.length);
-        // Cache in localStorage for offline access
-        localStorage.setItem('dealsuknow_products', JSON.stringify(data.record.products));
-        renderProducts(data.record.products);
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn('Cloud load failed, trying localStorage:', e.message);
-  }
-
-  // Fallback to localStorage
-  const localProducts = localStorage.getItem('dealsuknow_products');
-  
-  if (localProducts) {
-    try {
-      const data = JSON.parse(localProducts);
-      if (Array.isArray(data) && data.length > 0) {
-        console.log('✅ Loaded products from localStorage (cached)');
-        renderProducts(data);
-        return;
-      }
-    } catch (e) {
-      console.warn('Failed to parse localStorage products', e);
-    }
-  }
 
   // Fallback to products.json
   const controller = new AbortController();

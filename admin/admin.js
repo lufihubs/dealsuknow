@@ -167,23 +167,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     imagePreview.style.display = 'none';
   });
 
-  // Load existing products from cloud, localStorage, or products.json
-  async function loadProducts() {
-    // Try loading from cloud first (latest data)
-    try {
-      const cloudProducts = await window.loadFromCloud();
-      if (cloudProducts && Array.isArray(cloudProducts) && cloudProducts.length > 0) {
-        products = cloudProducts;
-        localStorage.setItem('dealsuknow_products', JSON.stringify(products));
-        console.log('✅ Loaded from cloud:', products.length, 'products');
-        renderProductsList();
-        return;
-      }
-    } catch (e) {
-      console.warn('Cloud load failed:', e);
-    }
-
-    // Try localStorage (cached)
+  // Load existing products from localStorage or products.json
+  function loadProducts() {
+    // Try localStorage first (for immediate edits)
     const localProducts = localStorage.getItem('dealsuknow_products');
     if (localProducts) {
       try {
@@ -426,66 +412,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNotification('Backup downloaded successfully!', 'info');
   });
 
-  // Publish to Cloud - Updates live site instantly
+  // Publish to GitHub - Professional deployment
   document.getElementById('sync-github').addEventListener('click', async () => {
     if (products.length === 0) {
-      alert('❌ No products to publish!\n\nAdd some products first, then publish.');
+      alert('❌ No products to publish!\n\nAdd some products first.');
       return;
     }
 
-    if (!confirm(`📤 Publish ${products.length} product(s) to live site?\n\nThis will make them visible to all visitors.`)) {
+    // Check if GitHub token is configured
+    if (!window.isTokenConfigured()) {
+      const setup = confirm(
+        '� SETUP REQUIRED\n\n' +
+        'To publish products, you need a GitHub token:\n\n' +
+        '1. Go to: github.com/settings/tokens\n' +
+        '2. Click "Generate new token (classic)"\n' +
+        '3. Check "repo" scope\n' +
+        '4. Copy the token\n' +
+        '5. Edit admin/github-sync.js\n' +
+        '6. Replace the token value\n' +
+        '7. Push to GitHub\n\n' +
+        'Click OK to copy the setup link.'
+      );
+      
+      if (setup) {
+        navigator.clipboard.writeText('https://github.com/settings/tokens/new');
+        alert('✅ Link copied to clipboard!\n\nCreate your token and update github-sync.js');
+      }
+      return;
+    }
+
+    if (!confirm(`📤 Publish ${products.length} product(s) to GitHub?\n\nNetlify will auto-deploy in ~30 seconds.`)) {
       return;
     }
 
     try {
-      // Publish to cloud storage (works across all domains)
-      const success = await window.saveToCloud(products);
+      const result = await window.saveToGitHub(products);
       
-      if (success) {
-        // Show success message
-        showNotification(`✅ Published ${products.length} products successfully!`, 'success');
+      if (result === 'SETUP_REQUIRED') {
+        return; // Already handled above
+      }
+      
+      if (result) {
+        // Show success with countdown
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        modal.innerHTML = `
+          <div style="background:white;padding:40px;border-radius:15px;max-width:500px;text-align:center;">
+            <div style="font-size:60px;margin-bottom:20px;">✅</div>
+            <h3 style="color:#198754;margin-bottom:20px;">Published Successfully!</h3>
+            <p style="color:#666;margin-bottom:30px;">
+              ${products.length} products pushed to GitHub<br>
+              Netlify is deploying your site now...
+            </p>
+            <div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:30px;">
+              <div style="font-size:48px;font-weight:bold;color:#0d6efd;" id="countdown">30</div>
+              <div style="color:#666;font-size:14px;">seconds until live</div>
+            </div>
+            <button onclick="this.closest('div').remove()" class="btn btn-primary">
+              Close
+            </button>
+          </div>
+        `;
+        document.body.appendChild(modal);
         
-        // Optional: Open main site to verify
-        if (confirm('✅ Products published!\n\nOpen main site to verify?')) {
-          window.open(window.location.origin.replace('/admin/panel.html', ''), '_blank');
-        }
+        // Countdown
+        let seconds = 30;
+        const countdownEl = document.getElementById('countdown');
+        const interval = setInterval(() => {
+          seconds--;
+          if (countdownEl) countdownEl.textContent = seconds;
+          if (seconds <= 0) {
+            clearInterval(interval);
+            if (countdownEl) {
+              countdownEl.textContent = '🎉';
+              countdownEl.parentElement.querySelector('div').textContent = 'Site is live!';
+            }
+          }
+        }, 1000);
       }
       
     } catch (error) {
       console.error('Publish error:', error);
-      showNotification('❌ Publish failed: ' + error.message, 'danger');
-      
-      // Show helpful error message
-      alert('❌ Publish Failed\n\n' + 
-            'Possible causes:\n' +
-            '1. No internet connection\n' +
-            '2. Cloud storage not configured\n' +
-            '3. API quota exceeded\n\n' +
-            'Products are saved locally for now.');
-    }
-  });
-
-  // Debug storage - show what's saved
-  document.getElementById('debug-storage').addEventListener('click', () => {
-    const stored = localStorage.getItem('dealsuknow_products');
-    if (!stored) {
-      alert('⚠️ No products found in localStorage!\n\nThis means:\n- Products not saving, OR\n- You\'re on a different domain than your main site\n\nSolution: Make sure admin panel and main site are on the SAME domain.');
-      return;
-    }
-    
-    try {
-      const data = JSON.parse(stored);
-      const info = `✅ Storage Working!\n\n` +
-        `Products in storage: ${data.length}\n` +
-        `Storage size: ${(stored.length / 1024).toFixed(2)} KB\n` +
-        `Max size: ~5000 KB\n\n` +
-        `Domain: ${window.location.hostname}\n\n` +
-        `First 3 products:\n` +
-        data.slice(0, 3).map(p => `- ${p.title}`).join('\n');
-      alert(info);
-      console.log('Full localStorage data:', data);
-    } catch (e) {
-      alert('❌ Storage corrupted!\n\n' + e.message);
+      alert('❌ Publish Failed\n\n' + error.message + '\n\nCheck console for details.');
     }
   });
 
