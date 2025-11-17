@@ -409,6 +409,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     showNotification('Backup downloaded successfully!', 'info');
   });
 
+  // Sync to GitHub - Updates live site
+  document.getElementById('sync-github').addEventListener('click', async () => {
+    if (!window.GITHUB_CONFIG.token || window.GITHUB_CONFIG.token === 'YOUR_GITHUB_TOKEN') {
+      alert('⚠️ GitHub Token Not Configured!\n\nTo enable live updates:\n\n1. Go to: https://github.com/settings/tokens/new\n2. Create token with "repo" scope\n3. Edit admin/github-sync.js\n4. Replace YOUR_GITHUB_TOKEN with your token\n5. Push changes to GitHub\n\nFor now, products are saved locally only.');
+      return;
+    }
+    
+    if (products.length === 0) {
+      alert('No products to sync!');
+      return;
+    }
+
+    if (confirm(`Sync ${products.length} product(s) to GitHub?\n\nThis will update your live site in ~1 minute.`)) {
+      const success = await window.saveToGitHub(products);
+      if (success) {
+        // Also save to localStorage as backup
+        autoSaveProducts();
+      }
+    }
+  });
+
   // Debug storage - show what's saved
   document.getElementById('debug-storage').addEventListener('click', () => {
     const stored = localStorage.getItem('dealsuknow_products');

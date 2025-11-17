@@ -119,19 +119,24 @@
       </div>
     </div>
 
-    <!-- Download JSON Button -->
+    <!-- Sync to GitHub -->
     <div class="mt-4 text-center">
-      <div class="alert alert-success">
-        <i class="fas fa-check-circle me-2"></i><strong>Live Updates Active!</strong><br>
-        <small>Changes appear instantly on the main site. Your products are saved in browser storage.</small>
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i><strong>Important!</strong><br>
+        <small>After adding/editing products, click "Sync to GitHub" to update your live site.<br>
+        Products are saved locally first, then synced to make them visible to all visitors.</small>
       </div>
-      <button id="download-json" class="btn btn-outline-primary">
+      <button id="sync-github" class="btn btn-primary btn-lg">
+        <i class="fab fa-github me-2"></i>Sync to GitHub (Update Live Site)
+      </button>
+      <br><br>
+      <button id="download-json" class="btn btn-outline-primary btn-sm">
         <i class="fas fa-download me-2"></i>Backup: Download JSON
       </button>
-      <button id="debug-storage" class="btn btn-outline-info ms-2">
+      <button id="debug-storage" class="btn btn-outline-info btn-sm ms-2">
         <i class="fas fa-bug me-2"></i>Debug Storage
       </button>
-      <button id="clear-storage" class="btn btn-outline-danger ms-2">
+      <button id="clear-storage" class="btn btn-outline-danger btn-sm ms-2">
         <i class="fas fa-trash me-2"></i>Reset to Default
       </button>
     </div>
@@ -144,6 +149,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="github-sync.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
