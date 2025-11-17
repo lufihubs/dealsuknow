@@ -1,88 +1,47 @@
-// Professional GitHub integration for automatic deployment
-// This uses GitHub Actions workflow to update products automatically
+// Secure GitHub integration via Netlify Functions
+// No tokens in browser - all authentication handled server-side
 
 const GITHUB_CONFIG = {
   owner: 'lufihubs',
   repo: 'dealsuknow',
   branch: 'main',
-  filePath: 'products.json',
-  // GitHub Personal Access Token - get from: https://github.com/settings/tokens
-  // Token needs 'repo' scope
-  token: 'ghp_EnterYourTokenHere123456789' // CHANGE THIS!
+  filePath: 'products.json'
 };
 
-// Check if token is configured
-function isTokenConfigured() {
-  return GITHUB_CONFIG.token && 
-         GITHUB_CONFIG.token !== 'ghp_EnterYourTokenHere123456789' && 
-         GITHUB_CONFIG.token.startsWith('ghp_');
-}
-
-// Save products to GitHub repository (triggers Netlify auto-deploy)
+// Save products via Netlify Function (secure)
 async function saveToGitHub(products) {
   try {
-    if (!isTokenConfigured()) {
-      throw new Error('SETUP_REQUIRED');
-    }
-
     showNotification('📤 Publishing to GitHub...', 'info');
     
-    // Step 1: Get current file SHA (required by GitHub API)
-    const getUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
-    const getResponse = await fetch(getUrl, {
+    // Call Netlify Function (token stored securely in environment)
+    const response = await fetch('/.netlify/functions/update-products', {
+      method: 'POST',
       headers: {
-        'Authorization': `token ${GITHUB_CONFIG.token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
-
-    if (!getResponse.ok) {
-      throw new Error(`Failed to fetch file: ${getResponse.status}`);
-    }
-
-    const fileData = await getResponse.json();
-    
-    // Step 2: Update file on GitHub
-    const content = JSON.stringify(products, null, 2);
-    const contentBase64 = btoa(unescape(encodeURIComponent(content)));
-    
-    const updateResponse = await fetch(getUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${GITHUB_CONFIG.token}`,
-        'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        message: `Update products - ${new Date().toLocaleString()}`,
-        content: contentBase64,
-        sha: fileData.sha,
-        branch: GITHUB_CONFIG.branch
-      })
+      body: JSON.stringify({ products })
     });
 
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(error.message || 'GitHub update failed');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Error: ${response.status}`);
     }
 
-    // Step 3: Also save to localStorage for immediate preview
+    const result = await response.json();
+    
+    // Save to localStorage for immediate preview
     localStorage.setItem('dealsuknow_products', JSON.stringify(products));
     
-    console.log('✅ Published to GitHub successfully');
-    showNotification('✅ Published! Netlify will deploy in ~30 seconds.', 'success');
+    console.log('✅ Published:', result);
+    showNotification('✅ Published! Netlify deploying now...', 'success');
     return true;
 
   } catch (error) {
-    if (error.message === 'SETUP_REQUIRED') {
-      return 'SETUP_REQUIRED';
-    }
+    console.error('Publish error:', error);
     
-    console.error('GitHub publish error:', error);
-    showNotification('❌ Publish failed: ' + error.message, 'danger');
-    
-    // Fallback: save to localStorage
+    // Fallback: localStorage only
     localStorage.setItem('dealsuknow_products', JSON.stringify(products));
+    showNotification('⚠️ Saved locally only.', 'warning');
     return false;
   }
 }
@@ -112,5 +71,4 @@ async function loadFromGitHub() {
 // Export functions
 window.saveToGitHub = saveToGitHub;
 window.loadFromGitHub = loadFromGitHub;
-window.isTokenConfigured = isTokenConfigured;
 window.GITHUB_CONFIG = GITHUB_CONFIG;
