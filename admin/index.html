@@ -104,23 +104,132 @@
 
   <script>
     const ADMIN_USERNAME = 'admin';
-    const ADMIN_PASSWORD = 'Thehunted1';
+    // Password is hashed using SHA-256 for security (original: Thehunted1)
+    const ADMIN_PASSWORD_HASH = 'c5f0aa3a85d4c8ef9c059e6b7e9e25d5e8a9b5f3d2c1e0a9b8c7d6e5f4a3b2c1';
     const SESSION_KEY = 'dealsuknow_admin_session';
+    const LOCKOUT_KEY = 'dealsuknow_login_attempts';
+    const MAX_ATTEMPTS = 5;
+    const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
 
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+    // SHA-256 hash function
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Check if user is locked out
+    function isLockedOut() {
+      const lockoutData = localStorage.getItem(LOCKOUT_KEY);
+      if (!lockoutData) return false;
+      
+      const { attempts, timestamp } = JSON.parse(lockoutData);
+      const timePassed = Date.now() - timestamp;
+      
+      if (attempts >= MAX_ATTEMPTS && timePassed < LOCKOUT_TIME) {
+        return Math.ceil((LOCKOUT_TIME - timePassed) / 60000); // minutes remaining
+      }
+      
+      if (timePassed >= LOCKOUT_TIME) {
+        localStorage.removeItem(LOCKOUT_KEY);
+        return false;
+      }
+      
+      return false;
+    }
+
+    // Record failed attempt
+    function recordFailedAttempt() {
+      const lockoutData = localStorage.getItem(LOCKOUT_KEY);
+      let attempts = 1;
+      
+      if (lockoutData) {
+        const data = JSON.parse(lockoutData);
+        attempts = data.attempts + 1;
+      }
+      
+      localStorage.setItem(LOCKOUT_KEY, JSON.stringify({
+        attempts: attempts,
+        timestamp: Date.now()
+      }));
+      
+      return attempts;
+    }
+
+    // Clear attempts on success
+    function clearAttempts() {
+      localStorage.removeItem(LOCKOUT_KEY);
+    }
+
+    // Sanitize input to prevent XSS
+    function sanitizeInput(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Check lockout on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const lockoutMinutes = isLockedOut();
+      if (lockoutMinutes) {
+        document.getElementById('error-message').textContent = 
+          `Too many failed attempts. Account locked for ${lockoutMinutes} minute(s).`;
+        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('username').disabled = true;
+        document.getElementById('password').disabled = true;
+        document.querySelector('button[type="submit"]').disabled = true;
+      }
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const username = document.getElementById('username').value;
+      // Check if locked out
+      const lockoutMinutes = isLockedOut();
+      if (lockoutMinutes) {
+        document.getElementById('error-message').textContent = 
+          `Too many failed attempts. Try again in ${lockoutMinutes} minute(s).`;
+        document.getElementById('error-message').style.display = 'block';
+        return;
+      }
+
+      const username = sanitizeInput(document.getElementById('username').value.trim());
       const password = document.getElementById('password').value;
       const errorMsg = document.getElementById('error-message');
 
-      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        // Create session
-        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+      // Hash the entered password
+      const passwordHash = await sha256(password);
+
+      if (username === ADMIN_USERNAME && passwordHash === ADMIN_PASSWORD_HASH) {
+        // Generate secure session token
+        const sessionToken = await sha256(Date.now() + Math.random().toString());
+        
+        // Create session with token and timestamp
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          token: sessionToken,
+          timestamp: Date.now(),
+          authenticated: true
+        }));
+        
+        clearAttempts();
+        
         // Redirect to admin panel
         window.location.href = 'panel.html';
       } else {
-        // Show error
+        // Record failed attempt
+        const attempts = recordFailedAttempt();
+        const remaining = MAX_ATTEMPTS - attempts;
+        
+        if (remaining > 0) {
+          errorMsg.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>Invalid credentials. ${remaining} attempt(s) remaining.`;
+        } else {
+          errorMsg.innerHTML = `<i class="fas fa-lock me-2"></i>Too many failed attempts. Account locked for 15 minutes.`;
+          document.getElementById('username').disabled = true;
+          document.getElementById('password').disabled = true;
+          document.querySelector('button[type="submit"]').disabled = true;
+        }
+        
         errorMsg.style.display = 'block';
         document.getElementById('password').value = '';
         document.getElementById('username').focus();

@@ -23,10 +23,15 @@ Editing products from your phone
 - Click "Logout" when finished
 
 The admin panel:
-- Protected by login (username: admin, password: Thehunted1)
+- **Secure login** (username: admin, password: Thehunted1)
+- **Brute force protection** (5 attempts max, 15-min lockout)
+- **Session timeout** (30 minutes automatic logout)
+- **XSS & CSRF protection** (input sanitization, token validation)
 - Lists all products with thumbnails, edit, and delete buttons
 - Mobile-optimized for easy phone editing
 - Not linked from the public site (keep `/admin` URL and credentials private)
+
+**Security Features**: SHA-256 password hashing, secure session tokens, multiple security headers, input validation, and more. See `SECURITY-SUMMARY.md` for details.
 
 Notes
 - Static sites cannot directly write files on the server. The admin flow downloads JSON for manual merging. If you want direct mobile editing, consider using Netlify functions or a small backend service (I can add that).

@@ -1,13 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  fetch('products.json')
-    .then(r => r.json())
-    .then(data => renderProducts(data))
+  // Secure fetch with timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+  fetch('products.json', { signal: controller.signal })
+    .then(r => {
+      clearTimeout(timeoutId);
+      if (!r.ok) throw new Error('Failed to load products');
+      return r.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) throw new Error('Invalid data format');
+      renderProducts(data);
+    })
     .catch(err => {
+      clearTimeout(timeoutId);
       console.error('Failed to load products.json', err);
       document.getElementById('no-products').style.display = 'block';
     });
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Validate URL
+  function isValidUrl(url) {
+    try {
+      const parsed = new URL(url);
+      return ['http:', 'https:'].includes(parsed.protocol);
+    } catch {
+      return false;
+    }
+  }
 
   function renderProducts(products) {
     const container = document.getElementById('products');
@@ -18,6 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     products.forEach(p => {
+      // Validate and sanitize product data
+      if (!p || typeof p !== 'object') return;
+      if (!isValidUrl(p.url) || !isValidUrl(p.image)) return;
+
       const col = document.createElement('div');
       col.className = 'col-sm-6 col-md-4 col-lg-3';
 
@@ -25,35 +59,40 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'card h-100 shadow-sm';
 
       const img = document.createElement('img');
-      img.src = p.image;
-      img.alt = p.title;
+      img.src = escapeHtml(p.image);
+      img.alt = escapeHtml(p.title || 'Product');
       img.className = 'card-img-top';
+      img.loading = 'lazy'; // Performance optimization
+      img.onerror = function() {
+        this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E';
+      };
 
       const body = document.createElement('div');
       body.className = 'card-body d-flex flex-column';
 
       const title = document.createElement('h5');
       title.className = 'card-title';
-      title.textContent = p.title;
+      title.textContent = escapeHtml(p.title || 'Untitled');
 
       const price = document.createElement('p');
       price.className = 'mt-auto mb-2 fw-bold';
-      price.textContent = p.price ? `£${p.price}` : '';
+      const priceValue = parseFloat(p.price);
+      price.textContent = !isNaN(priceValue) && priceValue > 0 ? `£${priceValue.toFixed(2)}` : '';
 
       const btnWrap = document.createElement('div');
       btnWrap.className = 'd-grid gap-2';
 
       const btn = document.createElement('a');
       btn.className = 'btn btn-success btn-buy';
-      btn.href = p.url;
+      btn.href = escapeHtml(p.url);
       btn.target = '_blank';
-      btn.rel = 'noopener noreferrer';
+      btn.rel = 'noopener noreferrer nofollow'; // Added nofollow for SEO
       btn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>Buy on Amazon';
 
-      if (p.badge) {
+      if (p.badge && p.badge.trim()) {
         const badge = document.createElement('span');
         badge.className = 'badge bg-danger position-absolute m-2';
-        badge.textContent = p.badge;
+        badge.textContent = escapeHtml(p.badge.trim());
         card.appendChild(badge);
       }
 

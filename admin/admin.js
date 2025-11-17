@@ -1,18 +1,95 @@
 function uid() { return 'p' + Date.now() + Math.random().toString(36).slice(2,7); }
 
 const SESSION_KEY = 'dealsuknow_admin_session';
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 let products = [];
+let csrfToken = '';
 
-// Check authentication
-if (sessionStorage.getItem(SESSION_KEY) !== 'authenticated') {
-  window.location.href = 'index.html';
+// Sanitize input to prevent XSS attacks
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Sanitize HTML output
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Validate URL to prevent javascript: or data: schemes
+function isValidUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+// Generate CSRF token
+async function generateCsrfToken() {
+  const randomData = crypto.getRandomValues(new Uint8Array(32));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', randomData);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Check authentication and session validity
+function checkAuth() {
+  const sessionData = sessionStorage.getItem(SESSION_KEY);
+  
+  if (!sessionData) {
+    window.location.href = 'index.html';
+    return false;
+  }
+  
+  try {
+    const session = JSON.parse(sessionData);
+    const timePassed = Date.now() - session.timestamp;
+    
+    if (!session.authenticated || timePassed > SESSION_TIMEOUT) {
+      sessionStorage.removeItem(SESSION_KEY);
+      alert('Session expired. Please login again.');
+      window.location.href = 'index.html';
+      return false;
+    }
+    
+    // Update timestamp on activity
+    session.timestamp = Date.now();
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return true;
+  } catch (e) {
+    sessionStorage.removeItem(SESSION_KEY);
+    window.location.href = 'index.html';
+    return false;
+  }
+}
+
+// Initial auth check
+if (!checkAuth()) {
+  throw new Error('Authentication required');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Generate CSRF token
+  csrfToken = await generateCsrfToken();
+  
+  // Check auth periodically
+  setInterval(checkAuth, 60000); // Check every minute
+  
   // Logout button
   document.getElementById('logout-btn').addEventListener('click', () => {
     if (confirm('Are you sure you want to logout?')) {
       sessionStorage.removeItem(SESSION_KEY);
+      localStorage.clear(); // Clear any stored data
       window.location.href = 'index.html';
     }
   });
@@ -57,15 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
     products.forEach((p, index) => {
       const item = document.createElement('div');
       item.className = 'list-group-item product-item';
+      
+      // Escape all output to prevent XSS
+      const safeTitle = escapeHtml(p.title || '');
+      const safePrice = escapeHtml(p.price || '');
+      const safeBadge = escapeHtml(p.badge || '');
+      const safeImage = escapeHtml(p.image || '');
+      
       item.innerHTML = `
         <div class="row align-items-center">
           <div class="col-auto">
-            <img src="${p.image}" alt="${p.title}" class="product-thumb">
+            <img src="${safeImage}" alt="${safeTitle}" class="product-thumb" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
           </div>
           <div class="col">
-            <h6 class="mb-1">${p.title}</h6>
-            <small class="text-muted">£${p.price}</small>
-            ${p.badge ? `<span class="badge bg-danger ms-2">${p.badge}</span>` : ''}
+            <h6 class="mb-1">${safeTitle}</h6>
+            <small class="text-muted">£${safePrice}</small>
+            ${safeBadge ? `<span class="badge bg-danger ms-2">${safeBadge}</span>` : ''}
           </div>
           <div class="col-auto">
             <button class="btn btn-sm btn-warning me-1" onclick="editProduct(${index})">
@@ -85,14 +169,46 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     
+    // Verify auth before submitting
+    if (!checkAuth()) return;
+    
     const editIndex = document.getElementById('edit-index').value;
+    
+    // Get and sanitize inputs
+    const title = sanitizeInput(document.getElementById('title').value.trim());
+    const imageUrl = document.getElementById('image').value.trim();
+    const productUrl = document.getElementById('url').value.trim();
+    const price = sanitizeInput(document.getElementById('price').value.trim());
+    const badge = sanitizeInput(document.getElementById('badge').value.trim());
+    
+    // Validate inputs
+    if (!title || title.length < 3) {
+      showNotification('Title must be at least 3 characters', 'danger');
+      return;
+    }
+    
+    if (!isValidUrl(imageUrl)) {
+      showNotification('Invalid image URL. Must start with http:// or https://', 'danger');
+      return;
+    }
+    
+    if (!isValidUrl(productUrl)) {
+      showNotification('Invalid Amazon URL. Must start with http:// or https://', 'danger');
+      return;
+    }
+    
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      showNotification('Invalid price. Must be a positive number', 'danger');
+      return;
+    }
+    
     const product = {
       id: document.getElementById('edit-id').value || uid(),
-      title: document.getElementById('title').value.trim(),
-      image: document.getElementById('image').value.trim(),
-      url: document.getElementById('url').value.trim(),
-      price: document.getElementById('price').value.trim(),
-      badge: document.getElementById('badge').value.trim()
+      title: title,
+      image: imageUrl,
+      url: productUrl,
+      price: price,
+      badge: badge
     };
 
     if (editIndex !== '') {

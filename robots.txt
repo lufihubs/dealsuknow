@@ -1,0 +1,20 @@
+# Robots.txt - SEO and Security
+
+# Allow search engines to index public pages
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /assets/
+Allow: /products.json
+Allow: /dealsuknow.jpg
+
+# Block admin area from search engines (security)
+Disallow: /admin/
+Disallow: /admin
+Disallow: /SECURITY.md
+Disallow: /.htaccess
+Disallow: /netlify.toml
+Disallow: /_redirects
+
+# Sitemap (optional - create this if you want better SEO)
+# Sitemap: https://yourdomain.com/sitemap.xml

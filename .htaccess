@@ -1,17 +1,70 @@
+# Security Headers for Apache
+<IfModule mod_headers.c>
+  # Prevent clickjacking
+  Header always set X-Frame-Options "DENY"
+  
+  # Prevent MIME type sniffing
+  Header always set X-Content-Type-Options "nosniff"
+  
+  # Enable XSS protection
+  Header always set X-XSS-Protection "1; mode=block"
+  
+  # Referrer policy
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # Content Security Policy
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' https: data:; frame-ancestors 'none';"
+  
+  # Strict Transport Security (HTTPS only - comment out if using HTTP)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
 # Redirect /admin to /admin/index.html
-# This works on Apache servers (most shared hosting)
+RewriteEngine On
+
+# Force HTTPS (uncomment if you have SSL certificate)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Remove .html extension
-RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^\.]+)$ $1.html [NC,L]
 
-# Optional: Add basic password protection for admin
-# Uncomment and configure if needed:
-# <Files "admin">
-#   AuthType Basic
-#   AuthName "Admin Access"
-#   AuthUserFile /path/to/.htpasswd
-#   Require valid-user
-# </Files>
+# Protect admin area - prevent directory listing
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+
+# Prevent access to sensitive files
+<FilesMatch "\.(json|md|log|bak|config)$">
+  <IfModule mod_authz_core.c>
+    # Allow products.json for the public
+    <If "%{REQUEST_URI} =~ m#products\.json$#">
+      Require all granted
+    </If>
+    <Else>
+      Require all denied
+    </Else>
+  </IfModule>
+</FilesMatch>
+
+# Extra security for admin folder
+<Directory "admin">
+  # No caching for admin pages
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-store, no-cache, must-revalidate, private"
+    Header set X-Robots-Tag "noindex, nofollow"
+  </IfModule>
+  
+  # Optional: Add HTTP Basic Authentication (double layer security)
+  # To enable: 
+  # 1. Uncomment lines below
+  # 2. Run: htpasswd -c .htpasswd admin
+  # 3. Enter password when prompted
+  
+  # AuthType Basic
+  # AuthName "Admin Access Required"
+  # AuthUserFile /full/path/to/.htpasswd
+  # Require valid-user
+</Directory>
