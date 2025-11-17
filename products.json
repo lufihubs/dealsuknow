@@ -1,0 +1,18 @@
+[
+  {
+    "id": "p1",
+    "title": "Wireless Earbuds - Clear Sound",
+    "image": "https://images.unsplash.com/photo-1580894894515-6f2f7a9b3f1e?q=80&w=800&auto=format&fit=crop",
+    "price": "24.99",
+    "url": "https://www.amazon.co.uk/dp/B00EXAMPLE",
+    "badge": "Deal"
+  },
+  {
+    "id": "p2",
+    "title": "Smartwatch - Fitness Tracker",
+    "image": "https://images.unsplash.com/photo-1516570182870-0c43f22d7c29?q=80&w=800&auto=format&fit=crop",
+    "price": "49.99",
+    "url": "https://www.amazon.co.uk/dp/B00EXAMPLE2",
+    "badge": "Popular"
+  }
+]
