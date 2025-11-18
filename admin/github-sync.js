@@ -54,7 +54,7 @@ async function saveToGitHub(products) {
     
     // First time - ask for token
     if (!token) {
-      showNotification('First time setup needed...', 'info');
+      console.log('📝 Prompting for token...');
       token = prompt(
         'GitHub Token Setup (one-time only):\n\n' +
         '1. Open: github.com/settings/tokens/new\n' +
@@ -68,10 +68,11 @@ async function saveToGitHub(products) {
       }
       
       saveToken(token);
-      showNotification('Token saved! Publishing now...', 'success');
+      console.log('✅ Token saved!');
+      alert('✅ Token saved! Publishing now...');
     }
     
-    showNotification('Publishing to GitHub...', 'info');
+    console.log('📤 Publishing to GitHub...');
     
     // Step 1: Get current file SHA
     const getUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
@@ -120,7 +121,7 @@ async function saveToGitHub(products) {
     localStorage.setItem('dealsuknow_products', JSON.stringify(products));
     
     console.log('✅ Published to GitHub successfully');
-    showNotification('✅ Published! Site updating in ~30 sec...', 'success');
+    alert('✅ Published! Your site will update in ~30 seconds.\n\nRefresh the main site to see changes.');
     return true;
 
   } catch (error) {
