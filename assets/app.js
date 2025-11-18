@@ -5,7 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-  fetch('products.json', { signal: controller.signal })
+  // Add cache-busting parameter to always get fresh data
+  fetch(`products.json?t=${Date.now()}`, { 
+    signal: controller.signal,
+    cache: 'no-store'
+  })
     .then(r => {
       clearTimeout(timeoutId);
       if (!r.ok) throw new Error('Failed to load products');
