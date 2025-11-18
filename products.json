@@ -1,29 +1,10 @@
-﻿[
+[
   {
-    "id": "p1761",
-    "title": "iPhone 15 Pro",
-    "image": "https://m.media-amazon.com/images/I/81fO1FQPwML._AC_SX679_.jpg",
-    "url": "https://www.amazon.com/dp/B0CHX1W1XY",
-    "price": "999.99",
-    "badge": "new",
-    "platform": "amazon"
-  },
-  {
-    "id": "p1762",
-    "title": "Samsung Galaxy S24",
-    "image": "https://m.media-amazon.com/images/I/71h7jDJ-tTL._AC_SX679_.jpg",
-    "url": "https://www.amazon.com/dp/B0CMDWC436",
-    "price": "849.99",
-    "badge": "sale",
-    "platform": "amazon"
-  },
-  {
-    "id": "p1763",
-    "title": "JUST HOODIE",
-    "image": "https://m.media-amazon.com/images/I/71pWR6Q7ExL._AC_SX569_.jpg",
-    "url": "https://t.me/just",
-    "price": "33.99",
-    "badge": "hot",
-    "platform": "amazon"
+    "id": "p1",
+    "title": "Wireless Earbuds - Clear Sound",
+    "image": "https://images.unsplash.com/photo-1580894894515-6f2f7a9b3f1e?q=80&w=800&auto=format&fit=crop",
+    "price": "24.99",
+    "url": "https://www.amazon.co.uk/dp/B00EXAMPLE",
+    "badge": "Deal"
   }
 ]
