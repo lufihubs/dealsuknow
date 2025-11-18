@@ -497,6 +497,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Reset GitHub token
+  document.getElementById('reset-token').addEventListener('click', () => {
+    if (confirm('Reset your GitHub token? You will need to enter it again next time you publish.')) {
+      localStorage.removeItem('github_token');
+      showNotification('Token cleared! Enter new token on next publish.', 'info');
+    }
+  });
+
   // Clear storage and reset to default
   document.getElementById('clear-storage').addEventListener('click', () => {
     if (confirm('This will reset to the default products.json from the server. Continue?')) {
