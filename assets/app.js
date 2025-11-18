@@ -1,30 +1,51 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
 
+  const loadingEl = document.getElementById('loading');
+  const productsEl = document.getElementById('products');
+  const noProductsEl = document.getElementById('no-products');
+  const errorEl = document.getElementById('error-message');
+  const errorText = document.getElementById('error-text');
+
   // Fallback to products.json
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   // Add cache-busting parameter to always get fresh data
+  console.log('Fetching products.json...');
   fetch(`products.json?t=${Date.now()}`, { 
     signal: controller.signal,
-    cache: 'no-store'
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
   })
     .then(r => {
       clearTimeout(timeoutId);
-      if (!r.ok) throw new Error('Failed to load products');
+      console.log('Response received:', r.status, r.statusText);
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
       return r.json();
     })
     .then(data => {
+      console.log('Products loaded:', data);
       if (!Array.isArray(data)) throw new Error('Invalid data format');
       // Save to localStorage for future use
       localStorage.setItem('dealsuknow_products', JSON.stringify(data));
+      loadingEl.style.display = 'none';
       renderProducts(data);
     })
     .catch(err => {
       clearTimeout(timeoutId);
-      console.error('Failed to load products.json', err);
-      document.getElementById('no-products').style.display = 'block';
+      console.error('Failed to load products:', err);
+      loadingEl.style.display = 'none';
+      if (err.name === 'AbortError') {
+        errorText.textContent = 'Request timed out. Please refresh the page.';
+        errorEl.style.display = 'block';
+      } else {
+        errorText.textContent = `Error loading products: ${err.message}. Please refresh the page.`;
+        errorEl.style.display = 'block';
+      }
     });
 
   // Escape HTML to prevent XSS
@@ -47,11 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderProducts(products) {
     const container = document.getElementById('products');
+    const noProductsEl = document.getElementById('no-products');
+    const loadingEl = document.getElementById('loading');
+    
     container.innerHTML = '';
+    loadingEl.style.display = 'none';
+    
     if (!products || products.length === 0) {
-      document.getElementById('no-products').style.display = 'block';
+      noProductsEl.style.display = 'block';
       return;
     }
+
+    console.log('Rendering', products.length, 'products...');
 
     products.forEach(p => {
       // Validate and sanitize product data
@@ -145,5 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
       col.appendChild(card);
       container.appendChild(col);
     });
+
+    // Show products container after rendering
+    container.style.display = '';
+    console.log('Products rendered successfully');
   }
 });
