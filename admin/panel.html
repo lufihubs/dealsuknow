@@ -32,6 +32,13 @@
   </nav>
 
   <main class="container my-4">
+    <!-- IMPORTANT WARNING -->
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Important: Image URLs Only!</h5>
+      <p class="mb-0"><strong>Do NOT upload image files!</strong> Uploading files corrupts the database. Instead, use image URLs from Unsplash, Imgur, or Cloudinary.</p>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2><i class="fas fa-cog me-2"></i>Admin Panel</h2>
       <a href="../index.html" class="btn btn-outline-primary btn-sm">
@@ -55,15 +62,23 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label"><i class="fas fa-image me-1"></i>Product Image</label>
-            <input type="file" class="form-control" id="image-file" accept="image/*" capture="environment">
-            <small class="text-muted d-block mt-1">Upload from device or camera</small>
-            <input type="hidden" id="image" required>
+            <label class="form-label"><i class="fas fa-image me-1"></i>Product Image URL</label>
+            <input type="url" class="form-control" id="image" required placeholder="https://images.unsplash.com/photo-...">
+            <small class="text-muted d-block mt-1">Use Unsplash, Imgur, or Cloudinary. <strong>Do NOT upload files!</strong></small>
+            <input type="file" class="form-control mt-2" id="image-file" accept="image/*" capture="environment" style="display:none;">
             <div id="image-preview" class="mt-2" style="display:none;">
               <img id="preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #ddd;">
               <button type="button" class="btn btn-sm btn-danger ms-2" id="remove-image">
                 <i class="fas fa-times"></i> Remove
               </button>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">
+                <strong>Image URL sources:</strong><br>
+                • Unsplash: <a href="https://unsplash.com" target="_blank">unsplash.com</a><br>
+                • Imgur: <a href="https://imgur.com" target="_blank">imgur.com</a><br>
+                • Cloudinary: <a href="https://cloudinary.com" target="_blank">cloudinary.com</a>
+              </small>
             </div>
           </div>
 

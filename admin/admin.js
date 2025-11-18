@@ -125,38 +125,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     urlInput.placeholder = placeholders[platform];
   });
 
-  // Handle image file upload
+  // Handle image file upload - DISABLED to prevent JSON corruption
   imageFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      showNotification('Please select a valid image file', 'danger');
-      imageFileInput.value = '';
-      return;
-    }
+    // Block file uploads - show error message
+    showNotification('⚠️ Image uploads disabled! Please use an image URL instead (Unsplash, Imgur, etc.)', 'danger');
+    imageFileInput.value = '';
+    return;
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      showNotification('Image size must be less than 2MB', 'danger');
-      imageFileInput.value = '';
-      return;
-    }
+    // OLD CODE - Base64 conversion corrupts products.json
+    // // Validate file type
+    // if (!file.type.startsWith('image/')) {
+    //   showNotification('Please select a valid image file', 'danger');
+    //   imageFileInput.value = '';
+    //   return;
+    // }
 
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Image = event.target.result;
-      imageHiddenInput.value = base64Image;
-      previewImg.src = base64Image;
-      imagePreview.style.display = 'block';
-      showNotification('Image uploaded successfully', 'success');
-    };
-    reader.onerror = () => {
-      showNotification('Failed to read image file', 'danger');
-    };
-    reader.readAsDataURL(file);
+    // // Validate file size (max 2MB)
+    // if (file.size > 2 * 1024 * 1024) {
+    //   showNotification('Image size must be less than 2MB', 'danger');
+    //   imageFileInput.value = '';
+    //   return;
+    // }
+
+    // // Convert to base64
+    // const reader = new FileReader();
+    // reader.onload = (event) => {
+    //   const base64Image = event.target.result;
+    //   imageHiddenInput.value = base64Image;
+    //   previewImg.src = base64Image;
+    //   imagePreview.style.display = 'block';
+    //   showNotification('Image uploaded successfully', 'success');
+    // };
+    // reader.onerror = () => {
+    //   showNotification('Failed to read image file', 'danger');
+    // };
+    // reader.readAsDataURL(file);
   });
 
   // Remove image
@@ -286,13 +292,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     if (!imageUrl) {
-      showNotification('Please upload a product image', 'danger');
+      showNotification('Please provide an image URL', 'danger');
       return;
     }
     
-    // Validate image is either base64 or valid URL
-    if (!imageUrl.startsWith('data:image/') && !isValidUrl(imageUrl)) {
-      showNotification('Invalid image. Please upload an image file', 'danger');
+    // ONLY allow URL-based images to prevent JSON corruption
+    if (!isValidUrl(imageUrl)) {
+      showNotification('Invalid image URL. Must start with http:// or https://', 'danger');
+      return;
+    }
+    
+    // Block base64 images
+    if (imageUrl.startsWith('data:image/')) {
+      showNotification('Base64 images not allowed. Please use an image URL (Unsplash, Imgur, etc.)', 'danger');
       return;
     }
     
