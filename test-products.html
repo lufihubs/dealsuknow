@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Products</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Products.json Test</h1>
+  <div id="status">Loading...</div>
+  <h2>Raw JSON:</h2>
+  <pre id="json"></pre>
+  <h2>Products Count:</h2>
+  <div id="count"></div>
+  <h2>Product Titles:</h2>
+  <ul id="titles"></ul>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const jsonEl = document.getElementById('json');
+    const countEl = document.getElementById('count');
+    const titlesEl = document.getElementById('titles');
+
+    console.log('Fetching products.json...');
+    
+    fetch('products.json')
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Products loaded:', data);
+        statusEl.innerHTML = '<span class="success">✅ SUCCESS - products.json loaded!</span>';
+        jsonEl.textContent = JSON.stringify(data, null, 2);
+        countEl.textContent = `${data.length} products found`;
+        
+        data.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = `${p.title || p.name || 'Untitled'} - $${p.price}`;
+          titlesEl.appendChild(li);
+        });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        statusEl.innerHTML = `<span class="error">❌ ERROR: ${error.message}</span>`;
+        jsonEl.textContent = error.stack;
+      });
+  </script>
+</body>
+</html>
