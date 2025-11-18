@@ -8,6 +8,33 @@ const GITHUB_CONFIG = {
   filePath: 'products.json'
 };
 
+// Simple notification helper
+function showNotification(message, type = 'info') {
+  const colors = {
+    success: '#198754',
+    error: '#dc3545',
+    info: '#0d6efd'
+  };
+  
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${colors[type] || colors.info};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10000;
+    font-weight: 500;
+  `;
+  notif.textContent = message;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => notif.remove(), 3000);
+}
+
 // Get token from localStorage
 function getToken() {
   return localStorage.getItem('github_token');

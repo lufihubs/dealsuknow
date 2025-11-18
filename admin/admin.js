@@ -419,81 +419,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Check if GitHub token is configured
-    if (!window.isTokenConfigured()) {
-      const setup = confirm(
-        '� SETUP REQUIRED\n\n' +
-        'To publish products, you need a GitHub token:\n\n' +
-        '1. Go to: github.com/settings/tokens\n' +
-        '2. Click "Generate new token (classic)"\n' +
-        '3. Check "repo" scope\n' +
-        '4. Copy the token\n' +
-        '5. Edit admin/github-sync.js\n' +
-        '6. Replace the token value\n' +
-        '7. Push to GitHub\n\n' +
-        'Click OK to copy the setup link.'
-      );
-      
-      if (setup) {
-        navigator.clipboard.writeText('https://github.com/settings/tokens/new');
-        alert('✅ Link copied to clipboard!\n\nCreate your token and update github-sync.js');
-      }
-      return;
-    }
-
-    if (!confirm(`📤 Publish ${products.length} product(s) to GitHub?\n\nNetlify will auto-deploy in ~30 seconds.`)) {
-      return;
-    }
-
+    // Call the GitHub sync function (handles token prompt automatically)
     try {
-      const result = await window.saveToGitHub(products);
-      
-      if (result === 'SETUP_REQUIRED') {
-        return; // Already handled above
-      }
-      
-      if (result) {
-        // Show success with countdown
-        const modal = document.createElement('div');
-        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;';
-        modal.innerHTML = `
-          <div style="background:white;padding:40px;border-radius:15px;max-width:500px;text-align:center;">
-            <div style="font-size:60px;margin-bottom:20px;">✅</div>
-            <h3 style="color:#198754;margin-bottom:20px;">Published Successfully!</h3>
-            <p style="color:#666;margin-bottom:30px;">
-              ${products.length} products pushed to GitHub<br>
-              Netlify is deploying your site now...
-            </p>
-            <div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:30px;">
-              <div style="font-size:48px;font-weight:bold;color:#0d6efd;" id="countdown">30</div>
-              <div style="color:#666;font-size:14px;">seconds until live</div>
-            </div>
-            <button onclick="this.closest('div').remove()" class="btn btn-primary">
-              Close
-            </button>
-          </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Countdown
-        let seconds = 30;
-        const countdownEl = document.getElementById('countdown');
-        const interval = setInterval(() => {
-          seconds--;
-          if (countdownEl) countdownEl.textContent = seconds;
-          if (seconds <= 0) {
-            clearInterval(interval);
-            if (countdownEl) {
-              countdownEl.textContent = '🎉';
-              countdownEl.parentElement.querySelector('div').textContent = 'Site is live!';
-            }
-          }
-        }, 1000);
-      }
-      
+      await window.saveToGitHub(products);
     } catch (error) {
-      console.error('Publish error:', error);
-      alert('❌ Publish Failed\n\n' + error.message + '\n\nCheck console for details.');
+      console.error('Publish failed:', error);
+      alert('❌ Publish failed: ' + error.message);
     }
   });
 
