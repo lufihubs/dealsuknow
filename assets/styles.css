@@ -26,12 +26,15 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 .card-img-top { 
-  object-fit: cover; 
-  height: 200px; 
+  object-fit: contain; 
+  height: 200px;
+  width: 100%;
+  padding: 10px;
+  background: #fff;
 }
 
 @media (max-width: 576px) { 
-  .card-img-top { height: 160px; } 
+  .card-img-top { height: 160px; padding: 8px; } 
   .header-logo { max-width: 120px; }
 }
 
