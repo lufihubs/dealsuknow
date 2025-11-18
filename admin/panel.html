@@ -119,21 +119,22 @@
       </div>
     </div>
 
-    <!-- Publish to Live Site -->
+    <!-- Simple Publishing -->
     <div class="mt-4 text-center">
-      <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i><strong>How It Works</strong><br>
-        <small>Products save automatically as you add them. Click "Publish to Live Site" when ready to make them visible to all visitors.</small>
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i><strong>Simple Publishing</strong><br>
+        <small>Products save locally. Click "Download JSON" → Upload to GitHub → Site updates automatically!</small>
       </div>
-      <button id="sync-github" class="btn btn-success btn-lg">
-        <i class="fab fa-github me-2"></i>Publish to GitHub
+      <a href="https://github.com/lufihubs/dealsuknow/upload/main" target="_blank" class="btn btn-success btn-lg mb-3">
+        <i class="fab fa-github me-2"></i>Upload to GitHub
+      </a>
+      <br>
+      <button id="download-json" class="btn btn-primary btn-lg">
+        <i class="fas fa-download me-2"></i>Download products.json
       </button>
       <br><br>
-      <button id="download-json" class="btn btn-outline-primary btn-sm">
-        <i class="fas fa-download me-2"></i>Backup JSON
-      </button>
-      <button id="clear-storage" class="btn btn-outline-danger btn-sm ms-2">
-        <i class="fas fa-trash me-2"></i>Reset
+      <button id="clear-storage" class="btn btn-outline-danger btn-sm">
+        <i class="fas fa-trash me-2"></i>Reset to Default
       </button>
     </div>
   </main>
