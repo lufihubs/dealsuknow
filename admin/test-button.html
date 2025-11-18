@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Publish Button</title>
+</head>
+<body>
+  <h1>Test Publish Button</h1>
+  <button id="sync-github">Test Publish</button>
+  
+  <div id="output" style="margin-top: 20px; padding: 20px; background: #f0f0f0;"></div>
+
+  <script src="github-sync.js"></script>
+  <script>
+    const output = document.getElementById('output');
+    
+    function log(msg) {
+      output.innerHTML += msg + '<br>';
+      console.log(msg);
+    }
+    
+    log('Script loaded');
+    log('window.saveToGitHub exists: ' + (typeof window.saveToGitHub));
+    
+    document.getElementById('sync-github').addEventListener('click', async () => {
+      log('Button clicked!');
+      
+      if (typeof window.saveToGitHub !== 'function') {
+        log('ERROR: window.saveToGitHub is not a function!');
+        return;
+      }
+      
+      try {
+        log('Calling saveToGitHub...');
+        const testProducts = [
+          {
+            id: 'test1',
+            name: 'Test Product',
+            price: 99.99,
+            image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            amazonLink: 'https://amazon.com',
+            platform: 'amazon'
+          }
+        ];
+        await window.saveToGitHub(testProducts);
+        log('SUCCESS!');
+      } catch (error) {
+        log('ERROR: ' + error.message);
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

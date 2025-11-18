@@ -47,8 +47,10 @@ function saveToken(token) {
 
 // Save products directly to GitHub (works on mobile!)
 async function saveToGitHub(products) {
+  console.log('🚀 saveToGitHub called with', products.length, 'products');
   try {
     let token = getToken();
+    console.log('🔑 Token exists:', !!token);
     
     // First time - ask for token
     if (!token) {
@@ -157,3 +159,5 @@ async function loadFromGitHub() {
 window.saveToGitHub = saveToGitHub;
 window.loadFromGitHub = loadFromGitHub;
 window.GITHUB_CONFIG = GITHUB_CONFIG;
+
+console.log('✅ github-sync.js loaded - saveToGitHub is ready');
