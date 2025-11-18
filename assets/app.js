@@ -52,7 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
     products.forEach(p => {
       // Validate and sanitize product data
       if (!p || typeof p !== 'object') return;
-      if (!isValidUrl(p.url) || !isValidUrl(p.image)) return;
+      
+      // Handle both old and new field names
+      const productUrl = p.url || p.amazonLink || p.link;
+      const productTitle = p.title || p.name;
+      
+      if (!isValidUrl(productUrl) || !isValidUrl(p.image)) return;
 
       const col = document.createElement('div');
       col.className = 'col-sm-6 col-md-4 col-lg-3';
@@ -62,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const img = document.createElement('img');
       img.src = escapeHtml(p.image);
-      img.alt = escapeHtml(p.title || 'Product');
+      img.alt = escapeHtml(productTitle || 'Product');
       img.className = 'card-img-top';
       img.loading = 'lazy'; // Performance optimization
       img.onerror = function() {
@@ -74,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const title = document.createElement('h5');
       title.className = 'card-title';
-      title.textContent = escapeHtml(p.title || 'Untitled');
+      title.textContent = escapeHtml(productTitle || 'Untitled');
 
       const price = document.createElement('p');
       price.className = 'mt-auto mb-2 fw-bold';
@@ -85,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnWrap.className = 'd-grid gap-2';
 
       const btn = document.createElement('a');
-      btn.href = escapeHtml(p.url);
+      btn.href = escapeHtml(productUrl);
       btn.target = '_blank';
       btn.rel = 'noopener noreferrer nofollow';
       
