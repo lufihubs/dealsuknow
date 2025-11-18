@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Block base64 images
     if (imageUrl.startsWith('data:image/')) {
-      showNotification('Base64 images not allowed. Please use an image URL (Unsplash, Imgur, etc.)', 'danger');
+      showNotification('Base64 images not allowed. Please use an image URL from ImgBB, Cloudinary, or Postimages (NOT Imgur - blocked in UK)', 'danger');
       return;
     }
     
