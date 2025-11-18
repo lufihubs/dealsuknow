@@ -48,6 +48,14 @@ function saveToken(token) {
 // Save products directly to GitHub (works on mobile!)
 async function saveToGitHub(products) {
   console.log('🚀 saveToGitHub called with', products.length, 'products');
+  
+  // Prevent multiple simultaneous publishes
+  if (window.isPublishing) {
+    alert('⏳ Already publishing... please wait!');
+    return false;
+  }
+  window.isPublishing = true;
+  
   try {
     let token = getToken();
     console.log('🔑 Token exists:', !!token);
@@ -74,47 +82,74 @@ async function saveToGitHub(products) {
     
     console.log('📤 Publishing to GitHub...');
     
-    // Step 1: Get current file SHA
-    const getUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
-    const getResponse = await fetch(getUrl, {
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
+    // Retry logic for 409 conflicts
+    let retries = 3;
+    let success = false;
+    
+    while (retries > 0 && !success) {
+      try {
+        // Step 1: Get current file SHA
+        const getUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
+        const getResponse = await fetch(getUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
 
-    if (!getResponse.ok) {
-      if (getResponse.status === 401) {
-        localStorage.removeItem('github_token');
-        throw new Error('Token invalid. Please refresh and try again.');
+        if (!getResponse.ok) {
+          if (getResponse.status === 401) {
+            localStorage.removeItem('github_token');
+            throw new Error('Token invalid. Please refresh and try again.');
+          }
+          throw new Error(`Failed to fetch file: ${getResponse.status}`);
+        }
+
+        const fileData = await getResponse.json();
+        
+        // Step 2: Update file
+        const content = JSON.stringify(products, null, 2);
+        const contentBase64 = btoa(unescape(encodeURIComponent(content)));
+        
+        const updateResponse = await fetch(getUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Update products - ${new Date().toLocaleString()}`,
+            content: contentBase64,
+            sha: fileData.sha,
+            branch: GITHUB_CONFIG.branch
+          })
+        });
+
+        if (!updateResponse.ok) {
+          if (updateResponse.status === 409) {
+            // Conflict - retry
+            retries--;
+            console.log(`⚠️ Conflict, retrying... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+          const error = await updateResponse.json();
+          throw new Error(error.message || 'GitHub update failed');
+        }
+        
+        success = true;
+        
+      } catch (error) {
+        if (retries === 1) throw error;
+        retries--;
+        console.log(`⚠️ Error, retrying... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-      throw new Error(`Failed to fetch file: ${getResponse.status}`);
     }
-
-    const fileData = await getResponse.json();
     
-    // Step 2: Update file
-    const content = JSON.stringify(products, null, 2);
-    const contentBase64 = btoa(unescape(encodeURIComponent(content)));
-    
-    const updateResponse = await fetch(getUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: `Update products - ${new Date().toLocaleString()}`,
-        content: contentBase64,
-        sha: fileData.sha,
-        branch: GITHUB_CONFIG.branch
-      })
-    });
-
-    if (!updateResponse.ok) {
-      const error = await updateResponse.json();
-      throw new Error(error.message || 'GitHub update failed');
+    if (!success) {
+      throw new Error('Failed after multiple retries');
     }
     
     // Save to localStorage too
@@ -129,8 +164,10 @@ async function saveToGitHub(products) {
     
     // Fallback: save locally
     localStorage.setItem('dealsuknow_products', JSON.stringify(products));
-    showNotification('❌ Publish failed: ' + error.message, 'danger');
+    alert('❌ Publish failed: ' + error.message + '\n\nSaved locally. Try again later.');
     return false;
+  } finally {
+    window.isPublishing = false;
   }
 }
 
